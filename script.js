@@ -34,17 +34,13 @@
     btn.disabled = true;
     btn.textContent = 'Enviando...';
 
-    const nombreCompleto = form.nombre.value.trim();
-    const espacio = nombreCompleto.indexOf(' ');
-    const firstname = espacio === -1 ? nombreCompleto : nombreCompleto.slice(0, espacio);
-    const lastname = espacio === -1 ? '' : nombreCompleto.slice(espacio + 1);
-
     const payload = {
       fields: [
-        { name: 'firstname', value: firstname },
-        { name: 'lastname', value: lastname },
+        { name: 'firstname', value: form.nombre.value.trim() },
+        { name: 'lastname', value: form.apellidos.value.trim() },
         { name: 'email', value: form.correo.value.trim() },
-        { name: 'sector_empresarial', value: form.sector.value.trim() },
+        { name: 'phone', value: form.telefono.value.trim() },
+        { name: 'company', value: form.empresa.value.trim() },
         { name: 'descripcion_del_proyecto', value: form.proyecto.value.trim() }
       ],
       context: {
