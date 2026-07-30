@@ -37,7 +37,6 @@
     const payload = {
       fields: [
         { name: 'firstname', value: form.nombre.value.trim() },
-        { name: 'lastname', value: form.apellidos.value.trim() },
         { name: 'email', value: form.correo.value.trim() },
         { name: 'phone', value: form.telefono.value.trim() },
         { name: 'company', value: form.empresa.value.trim() },
