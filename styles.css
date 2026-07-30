@@ -4,7 +4,7 @@
     --green:#4C8C2B;
     --green-light:#6FAE45;
     --gray:#7A7D80;
-    --gray-light:#EDEEEE;
+    --gray-light:#F3F5F4;
     --paper:#F6F7F5;
     --white:#FFFFFF;
   }
@@ -452,65 +452,70 @@
     color:var(--green-light);
   }
 
-  /* ===== FORMULARIO EMBEBIDO DE HUBSPOT ===== */
-  /* HubSpot inyecta el formulario dentro de un iframe (.hs-form-frame);
-     estos selectores solo aplican si HubSpot renderiza el form directamente
-     en el DOM del sitio (sin iframe) o vía CSS inyectable del portal. */
-  .hs-form-frame{
-    min-height:420px;
+  .btn-light{
+    margin-top:30px;
+    display:inline-block;
+    background:var(--green);
+    color:var(--white);
+    padding:14px 26px;
+    font-size:14px;
+    font-weight:700;
+    border-radius:2px;
+    transition:background .2s ease;
+    text-transform:uppercase;
+    letter-spacing:0.03em;
+    border:none;
+    cursor:pointer;
   }
-  .hs-form label{
-    font-size:12.5px !important;
-    font-weight:600 !important;
-    color:var(--navy-deep) !important;
-    letter-spacing:0.02em !important;
-    font-family:'Inter',sans-serif !important;
+  .btn-light:hover{background:var(--green-light);}
+
+  .project-form{
+    display:flex;
+    flex-direction:column;
+    gap:18px;
   }
-  .hs-form input[type="text"],
-  .hs-form input[type="email"],
-  .hs-form input[type="tel"],
-  .hs-form select,
-  .hs-form textarea,
-  .hs-input{
-    background:var(--gray-light) !important;
-    border:1px solid #D4D8D4 !important;
-    color:var(--navy-deep) !important;
-    padding:12px 14px !important;
-    font-family:'Inter',sans-serif !important;
-    font-size:14.5px !important;
-    border-radius:2px !important;
+  .form-field{
+    display:flex;
+    flex-direction:column;
+    gap:7px;
   }
-  .hs-form input:focus,
-  .hs-form select:focus,
-  .hs-form textarea:focus{
-    outline:none !important;
-    border-color:var(--green-light) !important;
-    background:var(--white) !important;
+  .form-row{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:18px;
   }
-  .hs-form .hs-button,
-  .hs-form input[type="submit"]{
-    background:var(--green) !important;
-    color:var(--white) !important;
-    border:none !important;
-    padding:14px 26px !important;
-    font-size:14px !important;
-    font-weight:700 !important;
-    border-radius:2px !important;
-    text-transform:uppercase !important;
-    letter-spacing:0.03em !important;
-    font-family:'Inter',sans-serif !important;
-    cursor:pointer !important;
-    transition:background .2s ease !important;
+  .form-field label{
+    font-size:12.5px;
+    font-weight:600;
+    color:var(--navy-deep);
+    letter-spacing:0.02em;
   }
-  .hs-form .hs-button:hover,
-  .hs-form input[type="submit"]:hover{
-    background:var(--green-light) !important;
+  .form-field input,
+  .form-field textarea{
+    background:var(--gray-light);
+    border:1px solid #D4D8D4;
+    color:var(--navy-deep);
+    padding:12px 14px;
+    font-family:'Inter',sans-serif;
+    font-size:14.5px;
+    border-radius:2px;
+    resize:vertical;
   }
-  .hs-form .hs-error-msgs label{
-    color:#C0392B !important;
+  .form-field input::placeholder,
+  .form-field textarea::placeholder{
+    color:var(--gray);
   }
-  .hs-form .hs-form-required{
-    color:var(--green) !important;
+  .form-field input:focus,
+  .form-field textarea:focus{
+    outline:none;
+    border-color:var(--green-light);
+    background:var(--white);
+  }
+  .project-form button{
+    border:none;
+    cursor:pointer;
+    margin-top:6px;
+    font-family:'Inter',sans-serif;
   }
 
   footer{
