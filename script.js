@@ -39,9 +39,24 @@
     errorMsg.style.display = 'none';
     consentError.style.display = 'none';
 
-    // El checkbox ya es required a nivel de HTML, pero se valida también en
-    // JS para garantizar que ni HubSpot ni el registro de consentimiento
-    // reciban nada si por alguna razón el navegador no bloqueó el envío.
+    // El <form> tiene novalidate para evitar que el navegador muestre su
+    // aviso nativo en el checkbox de consentimiento (queríamos mostrar el
+    // nuestro en su lugar). Como eso desactiva la validación automática de
+    // TODO el formulario, se valida manualmente cada campo obligatorio.
+
+    // Nombre, correo, teléfono y empresa: se revisan primero para que, si
+    // alguno está vacío o es inválido (ej. formato de correo), el navegador
+    // siga mostrando su aviso nativo de siempre sobre ese campo específico.
+    const camposRequeridos = [form.nombre, form.correo, form.telefono, form.empresa, form.proyecto];
+    for(let i = 0; i < camposRequeridos.length; i++){
+      if(!camposRequeridos[i].checkValidity()){
+        camposRequeridos[i].reportValidity();
+        return;
+      }
+    }
+
+    // Checkbox de consentimiento: aquí sí mostramos nuestro mensaje
+    // personalizado en vez del nativo del navegador.
     if(!form.consentimiento.checked){
       consentError.style.display = 'block';
       return;
