@@ -14,9 +14,15 @@
 (function(){
   const HUBSPOT_ENDPOINT = 'https://api.hsforms.com/submissions/v3/integration/submit/51814632/36c42814-d7c6-42d7-8189-33ae4df07961';
 
+  // Registro de consentimiento (Ley 1581 de 2012), completamente aparte del
+  // envío comercial a HubSpot: no comparten datos ni dependen entre sí.
+  const CONSENT_LOG_ENDPOINT = 'https://script.google.com/macros/s/AKfycbwPXbFBod9vGfWLY51fHsOcT5-RHh9DDvRzStSRZRCe008GohIaLsjpZ4FDJaTbGnJKFw/exec';
+  const POLICY_VERSION = '1.0 - 31 de julio de 2026';
+
   const form = document.getElementById('projectForm');
   const btn = document.getElementById('formSubmitBtn');
   const errorMsg = document.getElementById('formError');
+  const consentError = document.getElementById('consentError');
   const successBox = document.getElementById('formSuccess');
   if(!form) return;
 
@@ -31,16 +37,34 @@
     }
 
     errorMsg.style.display = 'none';
+    consentError.style.display = 'none';
+
+    // El checkbox ya es required a nivel de HTML, pero se valida también en
+    // JS para garantizar que ni HubSpot ni el registro de consentimiento
+    // reciban nada si por alguna razón el navegador no bloqueó el envío.
+    if(!form.consentimiento.checked){
+      consentError.style.display = 'block';
+      return;
+    }
+
     btn.disabled = true;
     btn.textContent = 'Enviando...';
 
-    const payload = {
+    const datos = {
+      nombre: form.nombre.value.trim(),
+      correo: form.correo.value.trim(),
+      telefono: form.telefono.value.trim(),
+      empresa: form.empresa.value.trim(),
+      proyecto: form.proyecto.value.trim()
+    };
+
+    const hubspotPayload = {
       fields: [
-        { name: '0-1/firstname', value: form.nombre.value.trim() },
-        { name: '0-1/email', value: form.correo.value.trim() },
-        { name: '0-1/phone', value: form.telefono.value.trim() },
-        { name: '0-1/company', value: form.empresa.value.trim() },
-        { name: '0-1/descripcion_del_proyecto', value: form.proyecto.value.trim() }
+        { name: '0-1/firstname', value: datos.nombre },
+        { name: '0-1/email', value: datos.correo },
+        { name: '0-1/phone', value: datos.telefono },
+        { name: '0-1/company', value: datos.empresa },
+        { name: '0-1/descripcion_del_proyecto', value: datos.proyecto }
       ],
       context: {
         pageUri: window.location.href,
@@ -48,10 +72,38 @@
       }
     };
 
+    // Envío en paralelo, no bloqueante, al registro de consentimiento en
+    // Google Sheets. Usa mode:'no-cors' porque así lo requiere el Web App
+    // de Google Apps Script; eso vuelve la respuesta opaca (no se puede
+    // leer status ni body), así que este envío es "best effort": se
+    // intenta siempre, pero no hay forma de confirmar desde el navegador
+    // si Google realmente lo recibió. Su éxito o fallo nunca bloquea ni
+    // afecta el envío a HubSpot ni el mensaje de éxito mostrado al usuario.
+    // Nota: en modo no-cors el navegador ignora headers no "seguros" como
+    // Content-Type: application/json (los descarta sin avisar), así que no
+    // se declara aquí — el body sigue siendo JSON como texto plano; del
+    // lado de Google Apps Script debe leerse con JSON.parse(e.postData.contents)
+    // sin depender de e.postData.type.
+    fetch(CONSENT_LOG_ENDPOINT, {
+      method: 'POST',
+      mode: 'no-cors',
+      body: JSON.stringify({
+        nombre: datos.nombre,
+        correo: datos.correo,
+        telefono: datos.telefono,
+        empresa: datos.empresa,
+        descripcion: datos.proyecto,
+        consentimientoAceptado: true,
+        versionPolitica: POLICY_VERSION
+      })
+    }).catch(function(err){
+      console.error('No se pudo registrar el consentimiento en Google Sheets (best effort):', err);
+    });
+
     fetch(HUBSPOT_ENDPOINT, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(payload)
+      body: JSON.stringify(hubspotPayload)
     })
     .then(function(res){
       return res.json().catch(function(){ return null; }).then(function(data){

@@ -513,6 +513,29 @@
     font-family:'Inter',sans-serif;
   }
 
+  .form-consent{
+    display:flex;
+    align-items:flex-start;
+    gap:9px;
+  }
+  .form-consent input[type="checkbox"]{
+    margin-top:3px;
+    flex-shrink:0;
+    accent-color:var(--green);
+  }
+  .form-consent label{
+    font-size:12.5px;
+    color:#4B5561;
+    line-height:1.5;
+  }
+  .form-consent label a{
+    color:var(--green);
+    text-decoration:underline;
+  }
+  .form-consent label a:hover{
+    color:var(--green-light);
+  }
+
   footer{
     padding:22px 6vw;
     display:flex;
@@ -521,6 +544,13 @@
     color:#8C97A3;
     background:var(--navy-deep);
     border-top:1px solid rgba(255,255,255,0.1);
+  }
+  footer a{
+    color:#8C97A3;
+    text-decoration:underline;
+  }
+  footer a:hover{
+    color:var(--green-light);
   }
 
   @media (max-width:860px){

@@ -234,6 +234,12 @@
           <textarea id="proyecto" name="Descripción del proyecto" rows="4" required placeholder="Describe brevemente tu proyecto y en qué necesitas apoyo..."></textarea>
         </div>
 
+        <div class="form-consent">
+          <input type="checkbox" id="consentimiento" name="Consentimiento" required>
+          <label for="consentimiento">He leído y acepto la <a href="docs/politica-tratamiento-datos.pdf" target="_blank" rel="noopener">Política de Tratamiento de Datos Personales</a> de ABR S.A.S.</label>
+        </div>
+        <p id="consentError" style="display:none;color:#C0392B;font-size:13.5px;margin-top:-10px;">Debes aceptar la política para continuar.</p>
+
         <button type="submit" class="btn-light" id="formSubmitBtn">Enviar información</button>
         <p id="formError" style="display:none;color:#C0392B;font-size:13.5px;margin-top:-6px;">No se pudo enviar. Por favor intenta de nuevo o escríbenos directo a abr.sas@outlook.com.</p>
       </form>
@@ -251,7 +257,7 @@
 
 <footer>
   <span>© 2026 ABR S.A.S. Barranquilla, Colombia. Todos los derechos reservados.</span>
-  <span>abr.sas@outlook.com</span>
+  <span><a href="docs/politica-tratamiento-datos.pdf" target="_blank" rel="noopener">Política de tratamiento de datos</a> · abr.sas@outlook.com</span>
 </footer>
 
 </body>
