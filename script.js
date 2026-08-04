@@ -19,6 +19,26 @@
   const CONSENT_LOG_ENDPOINT = 'https://script.google.com/macros/s/AKfycbwPXbFBod9vGfWLY51fHsOcT5-RHh9DDvRzStSRZRCe008GohIaLsjpZ4FDJaTbGnJKFw/exec';
   const POLICY_VERSION = '1.0 - 31 de julio de 2026';
 
+  // MEDIDA ANTI-SPAM 1 — Llave compartida con el Web App de Google Apps
+  // Script, que rechaza del lado del servidor cualquier petición sin ella.
+  //
+  // NIVEL DE PROTECCIÓN REAL: esta llave viaja en el código fuente público
+  // del sitio (inevitable en un sitio estático sin backend propio), así que
+  // NO es secreta en sentido criptográfico: cualquiera que abra este archivo
+  // puede leerla. Su función es filtrar bots genéricos y scrapers que hacen
+  // POST a endpoints encontrados automáticamente sin inspeccionar el JS de
+  // cada sitio. NO detiene a un atacante dirigido que lea este código.
+  const CONSENT_SECRET_KEY = 'abr-sas-f9k2m8x7q1w4z6-2026';
+
+  // Tiempo mínimo (segundos) entre que el formulario queda listo y el envío.
+  // Ver nota sobre el umbral más abajo, donde se aplica.
+  const MIN_FILL_SECONDS = 2;
+
+  // Se toma al ejecutarse el script (final del <body>, con el formulario ya
+  // parseado), que es más temprano y más confiable que esperar a
+  // DOMContentLoaded: no depende de que el evento alcance a registrarse.
+  const formReadyAt = Date.now();
+
   const form = document.getElementById('projectForm');
   const btn = document.getElementById('formSubmitBtn');
   const errorMsg = document.getElementById('formError');
@@ -50,13 +70,26 @@
   telefonoInput.addEventListener('input', validarTelefonoEnVivo);
   telefonoInput.addEventListener('blur', validarTelefonoEnVivo);
 
+  // Misma pantalla de éxito para un envío real y para uno descartado por
+  // sospecha de bot. Es intencional que sean indistinguibles: un mensaje de
+  // error le enseñaría al operador del bot qué ajustar para no ser detectado.
+  function mostrarExito(){
+    form.style.display = 'none';
+    successBox.style.display = 'block';
+  }
+
   form.addEventListener('submit', function(e){
     e.preventDefault();
 
-    // Anti-spam: si el campo honeypot fue llenado (por un bot), se descarta el envío en silencio
-    if(form._honey.value){
-      form.style.display = 'none';
-      successBox.style.display = 'block';
+    // MEDIDA ANTI-SPAM 2 — Honeypot.
+    // Va antes que cualquier validación: si el campo trampa trae algo, es un
+    // bot con certeza práctica y no tiene sentido evaluarle nada más.
+    // ALCANCE REAL: detiene bots genéricos y scrapers no dirigidos, que
+    // llenan indiscriminadamente todos los <input> del formulario. NO detiene
+    // a un bot programado específicamente contra este formulario, que puede
+    // simplemente omitir este campo.
+    if(form.website.value.trim() !== ''){
+      mostrarExito();
       return;
     }
 
@@ -90,6 +123,22 @@
     // personalizado en vez del nativo del navegador.
     if(!form.consentimiento.checked){
       consentError.style.display = 'block';
+      return;
+    }
+
+    // MEDIDA ANTI-SPAM 3 — Tiempo mínimo de llenado.
+    // Se evalúa al final, ya con el formulario completo y válido, y no al
+    // principio: si se evaluara antes de validar, un visitante curioso que
+    // pulsa "Enviar" apenas carga la página (formulario vacío) vería el
+    // mensaje de "¡Gracias!" sin haber enviado nada. Puesto aquí, ese caso
+    // recibe las validaciones normales, y sigue cumpliéndose el requisito de
+    // que ninguna de las tres medidas deje pasar un fetch.
+    // ALCANCE REAL: detiene bots que hacen submit instantáneo sin simular
+    // comportamiento humano. NO detiene a un bot que deliberadamente espere
+    // unos segundos antes de enviar.
+    const segundosLlenando = (Date.now() - formReadyAt) / 1000;
+    if(segundosLlenando < MIN_FILL_SECONDS){
+      mostrarExito();
       return;
     }
 
@@ -134,6 +183,7 @@
       method: 'POST',
       mode: 'no-cors',
       body: JSON.stringify({
+        secretKey: CONSENT_SECRET_KEY,
         nombre: datos.nombre,
         correo: datos.correo,
         telefono: datos.telefono,

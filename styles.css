@@ -513,6 +513,22 @@
     font-family:'Inter',sans-serif;
   }
 
+  /* Honeypot: fuera de pantalla y sin tamaño, pero sin display:none ni
+     visibility:hidden (los bots modernos detectan justamente esos dos).
+     Va dentro de .contact-card, que es position:relative y overflow:hidden,
+     así que el desplazamiento negativo queda clipeado ahí: no produce scroll
+     horizontal ni afecta el layout del formulario real. */
+  .hp-field{
+    position:absolute;
+    left:-9999px;
+    top:auto;
+    width:0;
+    height:0;
+    opacity:0;
+    overflow:hidden;
+    pointer-events:none;
+  }
+
   .form-consent{
     display:flex;
     align-items:flex-start;

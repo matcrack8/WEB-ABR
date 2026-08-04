@@ -206,8 +206,17 @@
     <div class="contact-card">
       <img class="watermark" src="img/logo.png" alt="" aria-hidden="true" style="left:50%; top:50%; transform:translate(-50%,-50%); width:260px; height:auto; opacity:0.10;">
       <form class="project-form" id="projectForm" novalidate>
-        <!-- Anti-spam: campo invisible, si un bot lo llena se descarta el envío -->
-        <input type="text" name="_honey" style="display:none">
+        <!-- Honeypot anti-spam: invisible para humanos, atractivo para bots que
+             llenan todos los campos. No usa display:none ni visibility:hidden
+             porque muchos bots evalúan computed styles y los detectan; se saca
+             de pantalla con .hp-field. tabindex="-1" lo excluye del tab-order,
+             aria-hidden lo oculta a lectores de pantalla, y autocomplete="off"
+             reduce el riesgo de que un gestor de contraseñas lo rellene solo
+             (un falso positivo bloquearía a un humano legítimo). -->
+        <div class="hp-field" aria-hidden="true">
+          <label for="website">No llenar este campo</label>
+          <input type="text" id="website" name="website" tabindex="-1" autocomplete="off">
+        </div>
 
         <div class="form-field">
           <label for="nombre">Nombre</label>
