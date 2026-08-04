@@ -23,8 +23,32 @@
   const btn = document.getElementById('formSubmitBtn');
   const errorMsg = document.getElementById('formError');
   const consentError = document.getElementById('consentError');
+  const telefonoInput = document.getElementById('telefono');
+  const telefonoError = document.getElementById('telefonoError');
   const successBox = document.getElementById('formSuccess');
   if(!form) return;
+
+  // Teléfono: solo "+" opcional al inicio, seguido de números y espacios.
+  // type="tel" no valida ningún formato por sí solo (es solo una pista de
+  // teclado en móvil), así que la restricción de caracteres se hace acá.
+  const TELEFONO_REGEX = /^\+?[0-9\s]+$/;
+
+  function telefonoEsValido(){
+    return TELEFONO_REGEX.test(telefonoInput.value.trim());
+  }
+
+  function validarTelefonoEnVivo(){
+    // No mostrar el error mientras el campo está vacío y el usuario no lo
+    // ha tocado todavía (evita el mensaje apenas se carga la página).
+    if(telefonoInput.value.trim() === ''){
+      telefonoError.style.display = 'none';
+      return;
+    }
+    telefonoError.style.display = telefonoEsValido() ? 'none' : 'block';
+  }
+
+  telefonoInput.addEventListener('input', validarTelefonoEnVivo);
+  telefonoInput.addEventListener('blur', validarTelefonoEnVivo);
 
   form.addEventListener('submit', function(e){
     e.preventDefault();
@@ -44,15 +68,22 @@
     // nuestro en su lugar). Como eso desactiva la validación automática de
     // TODO el formulario, se valida manualmente cada campo obligatorio.
 
-    // Nombre, correo, teléfono y empresa: se revisan primero para que, si
-    // alguno está vacío o es inválido (ej. formato de correo), el navegador
-    // siga mostrando su aviso nativo de siempre sobre ese campo específico.
-    const camposRequeridos = [form.nombre, form.correo, form.telefono, form.empresa, form.proyecto];
+    // Nombre, correo, empresa y descripción: se revisan primero para que,
+    // si alguno está vacío o es inválido (ej. formato de correo), el
+    // navegador siga mostrando su aviso nativo de siempre sobre ese campo.
+    const camposRequeridos = [form.nombre, form.correo, form.empresa, form.proyecto];
     for(let i = 0; i < camposRequeridos.length; i++){
       if(!camposRequeridos[i].checkValidity()){
         camposRequeridos[i].reportValidity();
         return;
       }
+    }
+
+    // Teléfono: validación propia con mensaje personalizado, no la nativa.
+    if(!telefonoEsValido()){
+      telefonoError.style.display = 'block';
+      telefonoInput.focus();
+      return;
     }
 
     // Checkbox de consentimiento: aquí sí mostramos nuestro mensaje
