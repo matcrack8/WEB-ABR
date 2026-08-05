@@ -45,8 +45,23 @@
   const consentError = document.getElementById('consentError');
   const telefonoInput = document.getElementById('telefono');
   const telefonoError = document.getElementById('telefonoError');
+  const proyectoInput = document.getElementById('proyecto');
+  const proyectoContador = document.getElementById('proyectoContador');
   const successBox = document.getElementById('formSuccess');
   if(!form) return;
+
+  // Límites de longitud. Duplican los maxlength del HTML de forma
+  // deliberada: si alguien borra el atributo desde DevTools, este chequeo
+  // sigue aplicando. Si se cambia un límite, hay que cambiarlo en los dos
+  // lados. (Aun así, ningún límite en el cliente es infranqueable — ver
+  // nota sobre validación autoritativa más abajo.)
+  const LIMITES = [
+    { input: form.nombre,   error: document.getElementById('nombreError'),   max: 100 },
+    { input: form.correo,   error: document.getElementById('correoError'),   max: 150 },
+    { input: form.telefono, error: telefonoError,                            max: 20 },
+    { input: form.empresa,  error: document.getElementById('empresaError'),  max: 150 },
+    { input: form.proyecto, error: document.getElementById('proyectoError'), max: 2000 }
+  ];
 
   // Teléfono: solo "+" opcional al inicio, seguido de números y espacios.
   // type="tel" no valida ningún formato por sí solo (es solo una pista de
@@ -70,6 +85,31 @@
   telefonoInput.addEventListener('input', validarTelefonoEnVivo);
   telefonoInput.addEventListener('blur', validarTelefonoEnVivo);
 
+  // Contador de caracteres restantes del textarea, en vivo.
+  const MAX_PROYECTO = 2000;
+  function actualizarContador(){
+    const restantes = MAX_PROYECTO - proyectoInput.value.length;
+    proyectoContador.textContent = restantes + ' caracteres restantes';
+    // Se pone en rojo en la recta final para avisar antes de llegar al tope.
+    proyectoContador.classList.toggle('limite-cerca', restantes <= 100);
+  }
+  proyectoInput.addEventListener('input', actualizarContador);
+  actualizarContador();
+
+  // Neutraliza "formula injection" en Google Sheets: una celda que empieza
+  // con = + - @ (o tab/retorno) se interpreta como fórmula, no como texto.
+  // Un atacante podría inyectar algo como =IMAGE("http://…"&A1) o
+  // =HYPERLINK(…) y filtrar datos de la hoja al abrirla, o simplemente
+  // corromper el registro de consentimiento, que es evidencia legal.
+  // Anteponer un apóstrofo fuerza a Sheets a tratar el valor como texto;
+  // el apóstrofo no se muestra en la celda.
+  // SOLO se aplica al payload de Sheets: a HubSpot va el valor íntegro,
+  // porque ahí no hay semántica de fórmulas y alterarlo corrompería el
+  // dato (un teléfono "+57 300…" no debe llegar al CRM como "'+57 300…").
+  function neutralizarFormula(valor){
+    return /^[=+\-@\t\r]/.test(valor) ? "'" + valor : valor;
+  }
+
   // Misma pantalla de éxito para un envío real y para uno descartado por
   // sospecha de bot. Es intencional que sean indistinguibles: un mensaje de
   // error le enseñaría al operador del bot qué ajustar para no ser detectado.
@@ -88,13 +128,16 @@
     // llenan indiscriminadamente todos los <input> del formulario. NO detiene
     // a un bot programado específicamente contra este formulario, que puede
     // simplemente omitir este campo.
-    if(form.website.value.trim() !== ''){
+    if(form.company_url_ref.value.trim() !== ''){
       mostrarExito();
       return;
     }
 
     errorMsg.style.display = 'none';
     consentError.style.display = 'none';
+    for(let i = 0; i < LIMITES.length; i++){
+      LIMITES[i].error.style.display = 'none';
+    }
 
     // El <form> tiene novalidate para evitar que el navegador muestre su
     // aviso nativo en el checkbox de consentimiento (queríamos mostrar el
@@ -114,9 +157,22 @@
 
     // Teléfono: validación propia con mensaje personalizado, no la nativa.
     if(!telefonoEsValido()){
+      telefonoError.textContent = 'El teléfono solo debe contener números';
       telefonoError.style.display = 'block';
       telefonoInput.focus();
       return;
+    }
+
+    // Longitud máxima por campo. Se compara sobre el valor ya recortado,
+    // que es el que realmente se envía.
+    for(let i = 0; i < LIMITES.length; i++){
+      const limite = LIMITES[i];
+      if(limite.input.value.trim().length > limite.max){
+        limite.error.textContent = 'Este campo excede el límite de caracteres permitido';
+        limite.error.style.display = 'block';
+        limite.input.focus();
+        return;
+      }
     }
 
     // Checkbox de consentimiento: aquí sí mostramos nuestro mensaje
@@ -189,11 +245,11 @@
       headers: { 'Content-Type': 'text/plain;charset=utf-8' },
       body: JSON.stringify({
         secretKey: CONSENT_SECRET_KEY,
-        nombre: datos.nombre,
-        correo: datos.correo,
-        telefono: datos.telefono,
-        empresa: datos.empresa,
-        descripcion: datos.proyecto,
+        nombre: neutralizarFormula(datos.nombre),
+        correo: neutralizarFormula(datos.correo),
+        telefono: neutralizarFormula(datos.telefono),
+        empresa: neutralizarFormula(datos.empresa),
+        descripcion: neutralizarFormula(datos.proyecto),
         consentimientoAceptado: true,
         versionPolitica: POLICY_VERSION
       })

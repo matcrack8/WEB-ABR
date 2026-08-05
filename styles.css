@@ -513,6 +513,24 @@
     font-family:'Inter',sans-serif;
   }
 
+  /* Errores por campo: mismo rojo y tamaño que los mensajes ya existentes
+     del formulario. Ocultos por defecto; el JS los muestra con display:block. */
+  .field-error{
+    display:none;
+    color:#C0392B;
+    font-size:13.5px;
+    margin-top:-2px;
+  }
+  /* Contador de caracteres del textarea: discreto, en el gris del sitio. */
+  .char-counter{
+    font-size:12px;
+    color:var(--gray);
+    margin-top:-2px;
+  }
+  .char-counter.limite-cerca{
+    color:#C0392B;
+  }
+
   /* Honeypot: fuera de pantalla y sin tamaño, pero sin display:none ni
      visibility:hidden (los bots modernos detectan justamente esos dos).
      Va dentro de .contact-card, que es position:relative y overflow:hidden,

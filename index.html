@@ -214,34 +214,42 @@
              reduce el riesgo de que un gestor de contraseñas lo rellene solo
              (un falso positivo bloquearía a un humano legítimo). -->
         <div class="hp-field" aria-hidden="true">
-          <label for="website">No llenar este campo</label>
-          <input type="text" id="website" name="website" tabindex="-1" autocomplete="off">
+          <label for="company_url_ref">No llenar este campo</label>
+          <input type="text" id="company_url_ref" name="company_url_ref" tabindex="-1" autocomplete="off">
         </div>
 
+        <!-- Los maxlength de abajo están duplicados como constantes en
+             script.js a propósito: si alguien quita el atributo desde
+             DevTools, la validación en JS sigue aplicando el límite. -->
         <div class="form-field">
           <label for="nombre">Nombre</label>
-          <input type="text" id="nombre" name="Nombre" required minlength="2" placeholder="Ej: Carlos Ramírez">
+          <input type="text" id="nombre" name="Nombre" required minlength="2" maxlength="100" placeholder="Ej: Carlos Ramírez">
+          <p id="nombreError" class="field-error">Este campo excede el límite de caracteres permitido</p>
         </div>
 
         <div class="form-field">
           <label for="correo">Correo electrónico</label>
-          <input type="email" id="correo" name="Correo electrónico" required placeholder="Ej: carlos@empresa.com">
+          <input type="email" id="correo" name="Correo electrónico" required maxlength="150" placeholder="Ej: carlos@empresa.com">
+          <p id="correoError" class="field-error">Este campo excede el límite de caracteres permitido</p>
         </div>
 
         <div class="form-field">
           <label for="telefono">Teléfono</label>
-          <input type="tel" id="telefono" name="Teléfono" required placeholder="Ej: +57 300 123 4567">
+          <input type="tel" id="telefono" name="Teléfono" required maxlength="20" placeholder="Ej: +57 300 123 4567">
           <p id="telefonoError" style="display:none;color:#C0392B;font-size:13.5px;margin-top:-2px;">El teléfono solo debe contener números</p>
         </div>
 
         <div class="form-field">
           <label for="empresa">Nombre de la empresa</label>
-          <input type="text" id="empresa" name="Nombre de la empresa" required placeholder="Ej: Constructora XYZ S.A.S">
+          <input type="text" id="empresa" name="Nombre de la empresa" required maxlength="150" placeholder="Ej: Constructora XYZ S.A.S">
+          <p id="empresaError" class="field-error">Este campo excede el límite de caracteres permitido</p>
         </div>
 
         <div class="form-field">
           <label for="proyecto">Descripción del proyecto</label>
-          <textarea id="proyecto" name="Descripción del proyecto" rows="4" required placeholder="Describe brevemente tu proyecto y en qué necesitas apoyo..."></textarea>
+          <textarea id="proyecto" name="Descripción del proyecto" rows="4" required maxlength="2000" placeholder="Describe brevemente tu proyecto y en qué necesitas apoyo..."></textarea>
+          <p id="proyectoContador" class="char-counter">2000 caracteres restantes</p>
+          <p id="proyectoError" class="field-error">Este campo excede el límite de caracteres permitido</p>
         </div>
 
         <div class="form-consent">
