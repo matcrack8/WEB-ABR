@@ -168,20 +168,25 @@
     };
 
     // Envío en paralelo, no bloqueante, al registro de consentimiento en
-    // Google Sheets. Usa mode:'no-cors' porque así lo requiere el Web App
-    // de Google Apps Script; eso vuelve la respuesta opaca (no se puede
-    // leer status ni body), así que este envío es "best effort": se
-    // intenta siempre, pero no hay forma de confirmar desde el navegador
-    // si Google realmente lo recibió. Su éxito o fallo nunca bloquea ni
-    // afecta el envío a HubSpot ni el mensaje de éxito mostrado al usuario.
-    // Nota: en modo no-cors el navegador ignora headers no "seguros" como
-    // Content-Type: application/json (los descarta sin avisar), así que no
-    // se declara aquí — el body sigue siendo JSON como texto plano; del
-    // lado de Google Apps Script debe leerse con JSON.parse(e.postData.contents)
-    // sin depender de e.postData.type.
+    // Google Sheets. Nunca bloquea ni afecta el envío a HubSpot ni el
+    // mensaje de éxito: si este registro falla, el usuario no se entera,
+    // pero queda un error detallado en consola para poder diagnosticarlo.
+    //
+    // POR QUÉ Content-Type: text/plain Y NO application/json:
+    // Apps Script NO puede responder a peticiones OPTIONS (devuelve 405,
+    // no existe un doOptions), así que cualquier request que dispare un
+    // preflight CORS queda bloqueada por el navegador. Mandar el body como
+    // text/plain lo mantiene dentro de las "simple requests", que no
+    // disparan preflight. El Apps Script igual lee el JSON crudo con
+    // JSON.parse(e.postData.contents), sin depender del Content-Type.
+    //
+    // Gracias a eso ya NO hace falta mode:'no-cors': Apps Script devuelve
+    // Access-Control-Allow-Origin: * en el 302 y en la respuesta final, así
+    // que la respuesta es legible y se puede confirmar si el registro quedó
+    // guardado de verdad, en vez de asumirlo a ciegas.
     fetch(CONSENT_LOG_ENDPOINT, {
       method: 'POST',
-      mode: 'no-cors',
+      headers: { 'Content-Type': 'text/plain;charset=utf-8' },
       body: JSON.stringify({
         secretKey: CONSENT_SECRET_KEY,
         nombre: datos.nombre,
@@ -192,8 +197,55 @@
         consentimientoAceptado: true,
         versionPolitica: POLICY_VERSION
       })
-    }).catch(function(err){
-      console.error('No se pudo registrar el consentimiento en Google Sheets (best effort):', err);
+    })
+    .then(function(res){
+      return res.text().then(function(texto){
+        return { ok: res.ok, status: res.status, texto: texto };
+      });
+    })
+    .then(function(r){
+      if(!r.ok){
+        console.error(
+          '[Consentimiento] FALLO: Google respondió HTTP ' + r.status + '. ' +
+          'El consentimiento NO quedó registrado. Respuesta:', r.texto
+        );
+        return;
+      }
+
+      let data = null;
+      try {
+        data = JSON.parse(r.texto);
+      } catch(err){
+        // La petición llegó (HTTP 200), pero el cuerpo no es el JSON
+        // esperado. La fila probablemente sí se escribió, así que se avisa
+        // como advertencia y no como fallo, para no disparar falsas alarmas.
+        console.warn(
+          '[Consentimiento] Google respondió 200 pero con un cuerpo no reconocible; ' +
+          'no se pudo confirmar el registro. Respuesta:', r.texto
+        );
+        return;
+      }
+
+      if(data && data.status === 'ok'){
+        return; // Registrado correctamente.
+      }
+
+      // Caso crítico: el más probable acá es que CONSENT_SECRET_KEY ya no
+      // coincida con la llave configurada en el Apps Script, que responde
+      // {"status":"error","message":"unauthorized"}. Sin este log, la
+      // evidencia de consentimiento se perdería en silencio.
+      console.error(
+        '[Consentimiento] RECHAZADO por Google: el consentimiento NO quedó ' +
+        'registrado. Revisa que CONSENT_SECRET_KEY coincida con la llave del ' +
+        'Apps Script. Respuesta:', data
+      );
+    })
+    .catch(function(err){
+      // Red caída, CORS, o el Web App sin desplegar como "Cualquier persona".
+      console.error(
+        '[Consentimiento] No se pudo contactar el registro en Google Sheets; ' +
+        'el consentimiento puede no haber quedado guardado:', err
+      );
     });
 
     fetch(HUBSPOT_ENDPOINT, {
